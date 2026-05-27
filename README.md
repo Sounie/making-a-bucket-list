@@ -10,12 +10,6 @@ the processing. By grabbing a page of results at a time, we should also consider
 failure partway through.
 
 The code in this repository is quite different to what was involved, as I am trying out AWS's 
-Kotlin library and integration tests involving chaos engineering with Localstack.
+Kotlin library rather than the AWS Java SDK.
 
-Also, rather than using a Sequence, I'm trying out Flow.
-
-Let's start off with some calculations
-listBuckets can return up to 10,000 results per response.
-Each bucket has a region, name, creation date, and ARN.
-Let's approximate that as 50 bytes,
-50 * 10,000 = 500,000 = about half a megabyte
+Also, rather than using a Sequence, I'm trying out Flow as that is part of the API for pagination.
