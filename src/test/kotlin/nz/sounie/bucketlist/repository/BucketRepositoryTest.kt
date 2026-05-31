@@ -12,10 +12,8 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toCollection
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -34,7 +32,9 @@ class BucketRepositoryTest {
 
         val bucketRepository = BucketRepository(mockS3Client)
 
-        bucketRepository.listBucketNames().count()
+        val count = bucketRepository.listBucketNames().count()
+
+        assertThat(count).isZero
 
         verify { mockS3Client.listBucketsPaginated(any<ListBucketsRequest>()) }
     }
@@ -72,7 +72,8 @@ class BucketRepositoryTest {
 
         assertThrows(RuntimeException::class.java) {
             runBlocking {
-                bucketRepository.listBucketNames().toCollection(mutableListOf())
+                val result = bucketRepository.listBucketNames().toCollection(mutableListOf())
+                assertThat(result).isEmpty()
             }
         }
 
@@ -105,9 +106,9 @@ class BucketRepositoryTest {
         var listOfBucketNames: List<String>? = null
         assertThrows(RuntimeException::class.java) {
             runBlocking {
-                bucketRepository.listBucketNames().onEach {
+                bucketRepository.listBucketNames().collect {
                     listOfBucketNames = listOfBucketNames?.plus(it) ?: listOf(it)
-                }.collect()
+                }
             }
         }
 
@@ -116,9 +117,9 @@ class BucketRepositoryTest {
         coVerify(exactly = 2) { mockS3Client.listBuckets(any<ListBucketsRequest>()) }
     }
 
-    private fun flowOfBuckets(emptyList: Any): Flow<ListBucketsResponse> {
+    private fun flowOfBuckets(bucketsList : List<Bucket>): Flow<ListBucketsResponse> {
         return flowOf(ListBucketsResponse {
-            buckets = emptyList as List<Bucket>?
+            buckets = bucketsList
         })
     }
 }
